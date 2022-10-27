@@ -4,8 +4,11 @@ import com.ead.authuser.dtos.UserDTO
 import com.ead.authuser.dtos.views.UserDTOView
 import com.ead.authuser.models.UserModel
 import com.ead.authuser.services.UserService
+import com.ead.authuser.services.impl.UserServiceImpl
 import com.ead.authuser.specifications.SpecificationTemplate
 import com.fasterxml.jackson.annotation.JsonView
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -29,6 +32,10 @@ import java.util.UUID
 @RequestMapping("/users")
 class UserController(val service: UserService) {
 
+    companion object {
+        val LOGGER: Logger = LogManager.getLogger()
+    }
+
     @GetMapping
     fun getAllUsers(
         spec: SpecificationTemplate.UserSpec,
@@ -51,43 +58,46 @@ class UserController(val service: UserService) {
     fun getById(@PathVariable id: UUID) = service.findById(id)
 
     @DeleteMapping("/{id}")
-    fun deleteById(@PathVariable id: UUID) =
-        service.findById(id)
+    fun deleteById(@PathVariable id: UUID): ResponseEntity<*> {
+        LOGGER.debug("DELETE deleteById userId: $id")
+        service.deleteById(id)
+        LOGGER.info("User deleted successfully userId: $id")
+        return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully")
+    }
 
     @PutMapping("/{id}")
     fun updateUser(
         @PathVariable id: UUID,
         @RequestBody @Validated(UserDTOView.UserPut::class) @JsonView(UserDTOView.UserPut::class) userDTO: UserDTO
-    ) = service.updateUserData(id, userDTO)
+    ): UserModel {
+        LOGGER.debug("PUT updateUser userDto: $userDTO")
+        val updatedUser = service.updateUserData(id, userDTO)
+        LOGGER.debug("PUT updateUser userModel: $updatedUser")
+        LOGGER.info("User updated successfully userId: $id")
+        return updatedUser
+    }
 
     @PutMapping("/{id}/password")
     fun updatePassword(
         @PathVariable id: UUID,
         @RequestBody @Validated(UserDTOView.PasswordPut::class) @JsonView(UserDTOView.PasswordPut::class) userDTO: UserDTO
-    ) = service.updatePassword(id, userDTO)
+    ): ResponseEntity<*> {
+        LOGGER.debug("PUT updatePassword userDto: $userDTO")
+        val updatedUser = service.updatePassword(id, userDTO)
+        LOGGER.debug("PUT updatePassword userModel: $updatedUser")
+        LOGGER.info("Password updated successfully userId: $id")
+        return ResponseEntity.status(HttpStatus.OK).body("Password updated successfully")
+    }
 
     @PutMapping("/{id}/image")
     fun updateImage(
         @PathVariable id: UUID,
         @RequestBody @Validated(UserDTOView.ImagePut::class) @JsonView(UserDTOView.ImagePut::class) userDTO: UserDTO
-    ) = service.updateImage(id, userDTO)
-
-//    String inputJson = "{\"name\":\"Jake\",\"salary\":3000,"
-//    + "\"address\":{\"street\":\"101 Blue Dr\",\"city\":\"White Smoke\"}}";
-//    System.out.println("input json: " + inputJson);
-//
-//    Employee existingEmployee = Employee.of("John", "Dev", 1000, "222-222-222",
-//    Address.of("101 Blue Dr", "SunBridge", "23456"));
-//    System.out.println("existing object: " + existingEmployee);
-//    System.out.println("existing object hashCode: " + System.identityHashCode(existingEmployee));
-//    System.out.println("existing nested object 'address' hashCode: " + System
-//    .identityHashCode(existingEmployee.getAddress()));
-//
-//    ObjectMapper objectMapper = new ObjectMapper();
-//    ObjectReader objectReader = objectMapper.readerForUpdating(existingEmployee);
-//    Employee updatedEmployee = objectReader.readValue(inputJson);
-//    System.out.println("updated object: " + updatedEmployee);
-//    System.out.println("updated object hashCode: " + System.identityHashCode(updatedEmployee));
-//    System.out.println("updated nested object 'address' hashCode: " + System
-//    .identityHashCode(updatedEmployee.getAddress()));
+    ): UserModel {
+        LOGGER.debug("PUT updateImage userDto: $userDTO")
+        val savedUser = service.updateImage(id, userDTO)
+        LOGGER.debug("PUT updateImage userModel saved $savedUser ")
+        LOGGER.info("Image updated successfully userId: $id ")
+        return savedUser
+    }
 }
