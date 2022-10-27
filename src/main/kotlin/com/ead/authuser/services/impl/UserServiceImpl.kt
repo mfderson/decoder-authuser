@@ -11,6 +11,8 @@ import com.ead.authuser.models.UserModel
 import com.ead.authuser.repositories.UserRepository
 import com.ead.authuser.services.UserService
 import com.ead.authuser.utils.DateTimeUtils
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.springframework.beans.BeanUtils
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -21,6 +23,10 @@ import java.util.*
 @Service
 class UserServiceImpl(val repository: UserRepository): UserService {
 
+    companion object {
+        val LOGGER: Logger = LogManager.getLogger()
+    }
+
     override fun findAll(): List<UserModel>? = repository.findAll()
 
     override fun findAll(spec: Specification<UserModel>, pageable: Pageable): Page<UserModel> {
@@ -30,7 +36,10 @@ class UserServiceImpl(val repository: UserRepository): UserService {
     override fun findById(id: UUID): UserModel =
         repository.findById(id).orElseThrow { EntityNotFoundException("Entity with id: $id not found") }
 
-    override fun deleteById(id: UUID) = repository.deleteById(id)
+    override fun deleteById(id: UUID) {
+        val user = findById(id)
+        repository.delete(user)
+    }
 
     override fun save(user: UserModel): UserModel {
         existsByUsername(user.username)
@@ -41,7 +50,8 @@ class UserServiceImpl(val repository: UserRepository): UserService {
     override fun existsByUsername(username: String): Boolean {
         val alreadyExists = repository.existsByUsername(username)
         if (alreadyExists) {
-            throw UsernameAlreadyTakenException("Username already taken")
+            LOGGER.warn("Username is already taken: $username")
+            throw UsernameAlreadyTakenException("Error: Username is already taken")
         }
         return alreadyExists
     }
@@ -49,25 +59,32 @@ class UserServiceImpl(val repository: UserRepository): UserService {
     override fun existsByEmail(email: String): Boolean {
         val alreadyExists = repository.existsByEmail(email)
         if (alreadyExists) {
-            throw EmailAlreadyTakenException("Username already taken")
+            LOGGER.warn("Email is already taken: $email")
+            throw EmailAlreadyTakenException("Error: Email is already taken")
         }
         return alreadyExists
     }
 
     override fun updateUserData(id: UUID, userDTO: UserDTO): UserModel {
         val user = findById(id)
-        user.fullName = userDTO.fullName
-        user.phoneNumber = userDTO.phoneNumber
-        user.cpf = userDTO.cpf
-        user.lastUpdateDate = DateTimeUtils.utcLocalDateTime()
+        user.apply {
+            fullName = userDTO.fullName
+            phoneNumber = userDTO.phoneNumber
+            cpf = userDTO.cpf
+            lastUpdateDate = DateTimeUtils.utcLocalDateTime()
+        }
 
-        return repository.save(user)
+        val savedUser = repository.save(user)
+        LOGGER.debug("PUT updateUserData userModel saved: $savedUser")
+        LOGGER.info("User updated successfully userId: ${savedUser.id}")
+        return savedUser
     }
 
     override fun updatePassword(id: UUID, userDTO: UserDTO): UserModel {
         val user = findById(id)
         if (user.password != userDTO.oldPassword) {
-            throw MismatchedOldPasswordException("Mismatched old password")
+            LOGGER.warn("Mismatched old password userId: $id")
+            throw MismatchedOldPasswordException("Error: Mismatched old password")
         }
         user.password = userDTO.password
         user.lastUpdateDate = DateTimeUtils.utcLocalDateTime()
@@ -96,6 +113,9 @@ class UserServiceImpl(val repository: UserRepository): UserService {
 
         BeanUtils.copyProperties(userDTO, user)
 
-        return repository.save(user)
+        val savedUser = repository.save(user)
+        LOGGER.debug("POST registerUser userModel saved: $savedUser")
+        LOGGER.info("User saved successfully userId: ${savedUser.id}")
+        return savedUser
     }
 }
