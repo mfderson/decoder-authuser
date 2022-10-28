@@ -5,6 +5,7 @@ import com.ead.authuser.enums.UserType
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.hateoas.RepresentationModel
 import java.io.Serializable
 import java.time.LocalDateTime
@@ -55,5 +56,10 @@ data class UserModel(
 
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    var lastUpdateDate: LocalDateTime = LocalDateTime.now()): RepresentationModel<UserModel>(), Serializable {
+    var lastUpdateDate: LocalDateTime = LocalDateTime.now(),
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    var usersCourses: Set<UserCourseModel> = setOf()
+    ): RepresentationModel<UserModel>(), Serializable {
 }

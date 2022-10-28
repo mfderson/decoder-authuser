@@ -72,7 +72,7 @@ class UserController(val service: UserService) {
     ): UserModel {
         LOGGER.debug("PUT updateUser userDto: $userDTO")
         val updatedUser = service.updateUserData(id, userDTO)
-        LOGGER.debug("PUT updateUser userModel: $updatedUser")
+        LOGGER.debug("PUT updateUser userId: $id")
         LOGGER.info("User updated successfully userId: $id")
         return updatedUser
     }
@@ -84,7 +84,7 @@ class UserController(val service: UserService) {
     ): ResponseEntity<*> {
         LOGGER.debug("PUT updatePassword userDto: $userDTO")
         val updatedUser = service.updatePassword(id, userDTO)
-        LOGGER.debug("PUT updatePassword userModel: $updatedUser")
+        LOGGER.debug("PUT updatePassword userId: $id")
         LOGGER.info("Password updated successfully userId: $id")
         return ResponseEntity.status(HttpStatus.OK).body("Password updated successfully")
     }
@@ -96,7 +96,7 @@ class UserController(val service: UserService) {
     ): UserModel {
         LOGGER.debug("PUT updateImage userDto: $userDTO")
         val savedUser = service.updateImage(id, userDTO)
-        LOGGER.debug("PUT updateImage userModel saved $savedUser ")
+        LOGGER.debug("PUT updateImage userId saved $id ")
         LOGGER.info("Image updated successfully userId: $id ")
         return savedUser
     }

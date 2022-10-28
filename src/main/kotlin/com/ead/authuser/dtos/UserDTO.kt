@@ -1,10 +1,9 @@
 package com.ead.authuser.dtos
 
 import com.ead.authuser.dtos.views.UserDTOView
-import com.ead.authuser.validations.UsernameContraint
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonView
-import java.util.UUID
+import java.util.*
 import javax.validation.constraints.Email
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Size

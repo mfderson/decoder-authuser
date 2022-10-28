@@ -75,7 +75,7 @@ class UserServiceImpl(val repository: UserRepository): UserService {
         }
 
         val savedUser = repository.save(user)
-        LOGGER.debug("PUT updateUserData userModel saved: $savedUser")
+        LOGGER.debug("PUT updateUserData userId saved: ${savedUser.id}")
         LOGGER.info("User updated successfully userId: ${savedUser.id}")
         return savedUser
     }
@@ -114,7 +114,7 @@ class UserServiceImpl(val repository: UserRepository): UserService {
         BeanUtils.copyProperties(userDTO, user)
 
         val savedUser = repository.save(user)
-        LOGGER.debug("POST registerUser userModel saved: $savedUser")
+        LOGGER.debug("POST registerUser userId saved: ${savedUser.id}")
         LOGGER.info("User saved successfully userId: ${savedUser.id}")
         return savedUser
     }
