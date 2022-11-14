@@ -7,6 +7,7 @@ import com.ead.authuser.exceptions.EmailAlreadyTakenException
 import com.ead.authuser.exceptions.EntityNotFoundException
 import com.ead.authuser.exceptions.MismatchedOldPasswordException
 import com.ead.authuser.exceptions.UsernameAlreadyTakenException
+import com.ead.authuser.models.UserCourseModel
 import com.ead.authuser.models.UserModel
 import com.ead.authuser.repositories.UserCourseRepository
 import com.ead.authuser.repositories.UserRepository
@@ -27,5 +28,12 @@ class UserCourseServiceImpl(val repository: UserCourseRepository): UserCourseSer
 
     companion object {
         val LOGGER: Logger = LogManager.getLogger()
+    }
+
+    override fun existsByUserAndCourseId(user: UserModel, courseId: UUID) =
+        repository.existsByUserAndCourseId(user, courseId)
+
+    override fun save(userCourseModel: UserCourseModel): UserCourseModel {
+        return repository.save(userCourseModel)
     }
 }

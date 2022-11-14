@@ -8,6 +8,7 @@ import com.ead.authuser.exceptions.EntityNotFoundException
 import com.ead.authuser.exceptions.MismatchedOldPasswordException
 import com.ead.authuser.exceptions.UsernameAlreadyTakenException
 import com.ead.authuser.models.UserModel
+import com.ead.authuser.repositories.UserCourseRepository
 import com.ead.authuser.repositories.UserRepository
 import com.ead.authuser.services.UserService
 import com.ead.authuser.utils.DateTimeUtils
@@ -19,9 +20,13 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.transaction.Transactional
 
 @Service
-class UserServiceImpl(val repository: UserRepository): UserService {
+class UserServiceImpl(
+    val repository: UserRepository,
+    val userCourseRepository: UserCourseRepository
+): UserService {
 
     companion object {
         val LOGGER: Logger = LogManager.getLogger()
@@ -36,8 +41,13 @@ class UserServiceImpl(val repository: UserRepository): UserService {
     override fun findById(id: UUID): UserModel =
         repository.findById(id).orElseThrow { EntityNotFoundException("Entity with id: $id not found") }
 
+    @Transactional
     override fun deleteById(id: UUID) {
         val user = findById(id)
+        val usersCourses = userCourseRepository.findAllUserCourseIntoUser(id)
+        if (usersCourses.isNotEmpty()) {
+            userCourseRepository.deleteAll(usersCourses)
+        }
         repository.delete(user)
     }
 
@@ -118,4 +128,7 @@ class UserServiceImpl(val repository: UserRepository): UserService {
         LOGGER.info("User saved successfully userId: ${savedUser.id}")
         return savedUser
     }
+
+    override fun updateUserType(userModel: UserModel) =
+        repository.save(userModel)
 }

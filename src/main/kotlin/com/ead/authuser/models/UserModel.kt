@@ -62,4 +62,7 @@ data class UserModel(
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     var usersCourses: Set<UserCourseModel> = setOf()
     ): RepresentationModel<UserModel>(), Serializable {
+
+        infix fun convertToUserCourseModel(courseId: UUID) =
+            UserCourseModel(user = this, courseId = courseId)
 }
