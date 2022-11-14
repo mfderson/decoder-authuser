@@ -4,7 +4,6 @@ import com.ead.authuser.dtos.UserDTO
 import com.ead.authuser.dtos.views.UserDTOView
 import com.ead.authuser.models.UserModel
 import com.ead.authuser.services.UserService
-import com.ead.authuser.services.impl.UserServiceImpl
 import com.ead.authuser.specifications.SpecificationTemplate
 import com.fasterxml.jackson.annotation.JsonView
 import org.apache.logging.log4j.LogManager
@@ -17,15 +16,8 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
+import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @CrossOrigin(origins = ["*"], maxAge = 3600)
@@ -44,8 +36,13 @@ class UserController(val service: UserService) {
             size = 10,
             sort = ["id"],
             direction = Sort.Direction.ASC
-        ) pageable: Pageable): ResponseEntity<Page<UserModel>> {
-        val userPage: Page<UserModel> = service.findAll(spec, pageable)
+        ) pageable: Pageable,
+        @RequestParam(required = false) courseId: UUID?
+    ): ResponseEntity<Page<UserModel>> {
+        val userPage = courseId?.let {
+            service.findAll(SpecificationTemplate.userCourseId(courseId).and(spec), pageable)
+        } ?: service.findAll(spec, pageable)
+
         userPage.toList().forEach {
             val selfLink = linkTo(UserController::class.java).slash(it.id).withSelfRel()
             it.add(selfLink)
@@ -72,7 +69,7 @@ class UserController(val service: UserService) {
     ): UserModel {
         LOGGER.debug("PUT updateUser userDto: $userDTO")
         val updatedUser = service.updateUserData(id, userDTO)
-        LOGGER.debug("PUT updateUser userModel: $updatedUser")
+        LOGGER.debug("PUT updateUser userId: $id")
         LOGGER.info("User updated successfully userId: $id")
         return updatedUser
     }
@@ -84,7 +81,7 @@ class UserController(val service: UserService) {
     ): ResponseEntity<*> {
         LOGGER.debug("PUT updatePassword userDto: $userDTO")
         val updatedUser = service.updatePassword(id, userDTO)
-        LOGGER.debug("PUT updatePassword userModel: $updatedUser")
+        LOGGER.debug("PUT updatePassword userId: $id")
         LOGGER.info("Password updated successfully userId: $id")
         return ResponseEntity.status(HttpStatus.OK).body("Password updated successfully")
     }
@@ -96,7 +93,7 @@ class UserController(val service: UserService) {
     ): UserModel {
         LOGGER.debug("PUT updateImage userDto: $userDTO")
         val savedUser = service.updateImage(id, userDTO)
-        LOGGER.debug("PUT updateImage userModel saved $savedUser ")
+        LOGGER.debug("PUT updateImage userId saved $id ")
         LOGGER.info("Image updated successfully userId: $id ")
         return savedUser
     }

@@ -29,4 +29,6 @@ interface UserService {
     fun registerUser(userDTO: UserDTO): UserModel
 
     fun findAll(spec: Specification<UserModel>, pageable: Pageable): Page<UserModel>
+
+    fun updateUserType(userModel: UserModel): UserModel
 }
