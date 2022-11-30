@@ -47,15 +47,4 @@ class CourseClient(val restTemplate: RestTemplate) {
         LOGGER.info("Ending request to $userId/courses")
         return result?.body
     }
-
-    fun getCourseById(courseId: UUID): ResponseEntity<CourseDto> {
-        val url = "$COURSE_REQUEST_URI/courses/$courseId"
-        return restTemplate.exchange(url, HttpMethod.GET, null, CourseDto::class.java)
-    }
-
-    fun deleteUserInCourse(id: UUID) {
-        val url = "$COURSE_REQUEST_URI/courses/users/$id"
-        restTemplate.exchange(url, HttpMethod.DELETE, null, String::class.java)
-
-    }
 }

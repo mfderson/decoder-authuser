@@ -1,6 +1,5 @@
 package com.ead.authuser.services.impl
 
-import com.ead.authuser.clients.CourseClient
 import com.ead.authuser.dtos.UserDTO
 import com.ead.authuser.enums.UserStatus
 import com.ead.authuser.enums.UserType
@@ -9,7 +8,6 @@ import com.ead.authuser.exceptions.EntityNotFoundException
 import com.ead.authuser.exceptions.MismatchedOldPasswordException
 import com.ead.authuser.exceptions.UsernameAlreadyTakenException
 import com.ead.authuser.models.UserModel
-import com.ead.authuser.repositories.UserCourseRepository
 import com.ead.authuser.repositories.UserRepository
 import com.ead.authuser.services.UserService
 import com.ead.authuser.utils.DateTimeUtils
@@ -26,8 +24,6 @@ import javax.transaction.Transactional
 @Service
 class UserServiceImpl(
     val repository: UserRepository,
-    val userCourseRepository: UserCourseRepository,
-    val courseClient: CourseClient
 ): UserService {
 
     companion object {
@@ -45,17 +41,8 @@ class UserServiceImpl(
 
     @Transactional
     override fun deleteById(id: UUID) {
-        var needDeleteUserInCourse = false
         val user = findById(id)
-        val usersCourses = userCourseRepository.findAllUserCourseIntoUser(id)
-        if (usersCourses.isNotEmpty()) {
-            userCourseRepository.deleteAll(usersCourses)
-            needDeleteUserInCourse = true
-        }
         repository.delete(user)
-        if (needDeleteUserInCourse) {
-            courseClient.deleteUserInCourse(id)
-        }
     }
 
     override fun save(user: UserModel): UserModel {

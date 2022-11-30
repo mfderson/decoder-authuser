@@ -36,12 +36,9 @@ class UserController(val service: UserService) {
             size = 10,
             sort = ["id"],
             direction = Sort.Direction.ASC
-        ) pageable: Pageable,
-        @RequestParam(required = false) courseId: UUID?
+        ) pageable: Pageable
     ): ResponseEntity<Page<UserModel>> {
-        val userPage = courseId?.let {
-            service.findAll(SpecificationTemplate.userCourseId(courseId).and(spec), pageable)
-        } ?: service.findAll(spec, pageable)
+        val userPage = service.findAll(spec, pageable)
 
         userPage.toList().forEach {
             val selfLink = linkTo(UserController::class.java).slash(it.id).withSelfRel()

@@ -56,13 +56,6 @@ data class UserModel(
 
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    var lastUpdateDate: LocalDateTime = LocalDateTime.now(),
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    var usersCourses: Set<UserCourseModel> = setOf()
+    var lastUpdateDate: LocalDateTime = LocalDateTime.now()
     ): RepresentationModel<UserModel>(), Serializable {
-
-        infix fun convertToUserCourseModel(courseId: UUID) =
-            UserCourseModel(user = this, courseId = courseId)
 }
