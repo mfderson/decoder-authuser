@@ -17,6 +17,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
+  rabbitmq:
+    addresses: amqps://uiunkbop:YdOPpryWSXEGGAVeLk24v_xOnmdlVxm5@moose.rmq.cloudamqp.com/uiunkbop
 
 logging:
   level:
