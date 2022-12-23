@@ -31,4 +31,6 @@ interface UserService {
     fun findAll(spec: Specification<UserModel>, pageable: Pageable): Page<UserModel>
 
     fun updateUserType(userModel: UserModel): UserModel
+
+    fun saveAndPublishUserEvent(userModel: UserModel): UserModel
 }

@@ -1,6 +1,7 @@
 package com.ead.authuser.services.impl
 
 import com.ead.authuser.dtos.UserDTO
+import com.ead.authuser.enums.ActionType
 import com.ead.authuser.enums.UserStatus
 import com.ead.authuser.enums.UserType
 import com.ead.authuser.exceptions.EmailAlreadyTakenException
@@ -8,6 +9,8 @@ import com.ead.authuser.exceptions.EntityNotFoundException
 import com.ead.authuser.exceptions.MismatchedOldPasswordException
 import com.ead.authuser.exceptions.UsernameAlreadyTakenException
 import com.ead.authuser.models.UserModel
+import com.ead.authuser.models.convertToUsereventDto
+import com.ead.authuser.publishers.UserEventPublisher
 import com.ead.authuser.repositories.UserRepository
 import com.ead.authuser.services.UserService
 import com.ead.authuser.utils.DateTimeUtils
@@ -24,6 +27,7 @@ import javax.transaction.Transactional
 @Service
 class UserServiceImpl(
     val repository: UserRepository,
+    val userEventPublisher: UserEventPublisher
 ): UserService {
 
     companion object {
@@ -117,7 +121,7 @@ class UserServiceImpl(
 
         BeanUtils.copyProperties(userDTO, user)
 
-        val savedUser = repository.save(user)
+        val savedUser = saveAndPublishUserEvent(user)
         LOGGER.debug("POST registerUser userId saved: ${savedUser.id}")
         LOGGER.info("User saved successfully userId: ${savedUser.id}")
         return savedUser
@@ -125,4 +129,11 @@ class UserServiceImpl(
 
     override fun updateUserType(userModel: UserModel) =
         repository.save(userModel)
+
+    @Transactional
+    override fun saveAndPublishUserEvent(userModel: UserModel): UserModel {
+        val savedUserModel = repository.save(userModel)
+        userEventPublisher.publishUserEvent(savedUserModel.convertToUsereventDto(), ActionType.CREATE)
+        return savedUserModel
+    }
 }
