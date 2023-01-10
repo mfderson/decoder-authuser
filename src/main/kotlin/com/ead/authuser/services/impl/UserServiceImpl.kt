@@ -1,6 +1,7 @@
 package com.ead.authuser.services.impl
 
 import com.ead.authuser.dtos.UserDTO
+import com.ead.authuser.dtos.UserEventDto
 import com.ead.authuser.enums.ActionType
 import com.ead.authuser.enums.UserStatus
 import com.ead.authuser.enums.UserType
@@ -82,7 +83,7 @@ class UserServiceImpl(
             lastUpdateDate = DateTimeUtils.utcLocalDateTime()
         }
 
-        val savedUser = repository.save(user)
+        val savedUser = updateAndPublishUserEvent(user)
         LOGGER.debug("PUT updateUserData userId saved: ${savedUser.id}")
         LOGGER.info("User updated successfully userId: ${savedUser.id}")
         return savedUser
@@ -134,6 +135,18 @@ class UserServiceImpl(
     override fun saveAndPublishUserEvent(userModel: UserModel): UserModel {
         val savedUserModel = repository.save(userModel)
         userEventPublisher.publishUserEvent(savedUserModel.convertToUsereventDto(), ActionType.CREATE)
+        return savedUserModel
+    }
+
+    override fun deleteAndPublishUserEvent(id: UUID) {
+        deleteById(id)
+        userEventPublisher.publishUserEvent(UserEventDto(userId = id), ActionType.DELETE)
+    }
+
+    @Transactional
+    override fun updateAndPublishUserEvent(userModel: UserModel) : UserModel {
+        val savedUserModel = repository.save(userModel)
+        userEventPublisher.publishUserEvent(savedUserModel.convertToUsereventDto(), ActionType.UPDATE)
         return savedUserModel
     }
 }
