@@ -22,7 +22,7 @@ class InstructorController(
 
         user.type = UserType.INSTRUCTOR
         user.lastUpdateDate = DateTimeUtils.utcLocalDateTime()
-        userService.updateUserType(user)
+        userService.updateAndPublishUserEvent(user)
 
         return ResponseEntity.status(HttpStatus.OK).body(user)
     }

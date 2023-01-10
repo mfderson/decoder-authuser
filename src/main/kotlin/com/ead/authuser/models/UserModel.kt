@@ -1,5 +1,6 @@
 package com.ead.authuser.models
 
+import com.ead.authuser.dtos.UserEventDto
 import com.ead.authuser.enums.UserStatus
 import com.ead.authuser.enums.UserType
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -56,13 +57,21 @@ data class UserModel(
 
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    var lastUpdateDate: LocalDateTime = LocalDateTime.now(),
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    var usersCourses: Set<UserCourseModel> = setOf()
+    var lastUpdateDate: LocalDateTime = LocalDateTime.now()
     ): RepresentationModel<UserModel>(), Serializable {
 
-        infix fun convertToUserCourseModel(courseId: UUID) =
-            UserCourseModel(user = this, courseId = courseId)
+}
+
+fun UserModel.convertToUsereventDto(): UserEventDto {
+    return UserEventDto(
+        this.id,
+        this.username,
+        this.email,
+        this.fullName,
+        this.status.name,
+        this.type.name,
+        this.phoneNumber,
+        this.cpf,
+        this.imageUrl
+    )
 }

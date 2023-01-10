@@ -5,6 +5,7 @@ import com.ead.authuser.dtos.views.UserDTOView
 import com.ead.authuser.models.UserModel
 import com.ead.authuser.services.UserService
 import com.ead.authuser.specifications.SpecificationTemplate
+import com.ead.authuser.utils.DateTimeUtils
 import com.fasterxml.jackson.annotation.JsonView
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -36,12 +37,9 @@ class UserController(val service: UserService) {
             size = 10,
             sort = ["id"],
             direction = Sort.Direction.ASC
-        ) pageable: Pageable,
-        @RequestParam(required = false) courseId: UUID?
+        ) pageable: Pageable
     ): ResponseEntity<Page<UserModel>> {
-        val userPage = courseId?.let {
-            service.findAll(SpecificationTemplate.userCourseId(courseId).and(spec), pageable)
-        } ?: service.findAll(spec, pageable)
+        val userPage = service.findAll(spec, pageable)
 
         userPage.toList().forEach {
             val selfLink = linkTo(UserController::class.java).slash(it.id).withSelfRel()
@@ -57,7 +55,7 @@ class UserController(val service: UserService) {
     @DeleteMapping("/{id}")
     fun deleteById(@PathVariable id: UUID): ResponseEntity<*> {
         LOGGER.debug("DELETE deleteById userId: $id")
-        service.deleteById(id)
+        service.deleteAndPublishUserEvent(id)
         LOGGER.info("User deleted successfully userId: $id")
         return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully")
     }
@@ -92,7 +90,12 @@ class UserController(val service: UserService) {
         @RequestBody @Validated(UserDTOView.ImagePut::class) @JsonView(UserDTOView.ImagePut::class) userDTO: UserDTO
     ): UserModel {
         LOGGER.debug("PUT updateImage userDto: $userDTO")
-        val savedUser = service.updateImage(id, userDTO)
+        val user = service.findById(id)
+        user.apply {
+            this.imageUrl = userDTO.imageUrl
+            this.lastUpdateDate = DateTimeUtils.utcLocalDateTime()
+        }
+        val savedUser = service.updateAndPublishUserEvent(user)
         LOGGER.debug("PUT updateImage userId saved $id ")
         LOGGER.info("Image updated successfully userId: $id ")
         return savedUser

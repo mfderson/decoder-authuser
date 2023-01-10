@@ -3,6 +3,7 @@ package com.ead.authuser.dtos
 import com.ead.authuser.dtos.views.UserDTOView
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonView
+import org.hibernate.validator.constraints.br.CPF
 import java.util.*
 import javax.validation.constraints.Email
 import javax.validation.constraints.NotBlank
@@ -39,6 +40,7 @@ data class UserDTO(
     @JsonView(UserDTOView.RegistrationPost::class, UserDTOView.UserPut::class)
     var phoneNumber: String = "",
 
+    @field:CPF(groups = [UserDTOView.RegistrationPost::class, UserDTOView.UserPut::class])
     @JsonView(UserDTOView.RegistrationPost::class, UserDTOView.UserPut::class)
     var cpf: String = "",
 
