@@ -3,9 +3,11 @@ package com.ead.authuser.clients
 import com.ead.authuser.dtos.CourseDto
 import com.ead.authuser.dtos.ResponsePageDto
 import com.ead.authuser.utils.ClientUtils
+import io.github.resilience4j.retry.annotation.Retry
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -25,12 +27,15 @@ class CourseClient(val restTemplate: RestTemplate) {
     @Value("\${ead.api.url.course}")
     lateinit var COURSE_REQUEST_URI: String
 
+    @Retry(name = "retryInstance", fallbackMethod = "retryFallback")
     fun getAllCoursesByUser(userId: UUID, pageable: Pageable): ResponsePageDto<CourseDto>? {
         var result: ResponseEntity<ResponsePageDto<CourseDto>>? = null
         val url = COURSE_REQUEST_URI + ClientUtils.createUrlGetAllCoursesByUser(userId, pageable)
 
         LOGGER.debug("Request URL: $url")
         LOGGER.info("Request URL: $url")
+
+        println("=== Start request do course api ===")
 
         try {
             result = restTemplate.exchange(
@@ -46,5 +51,10 @@ class CourseClient(val restTemplate: RestTemplate) {
         }
         LOGGER.info("Ending request to $userId/courses")
         return result?.body
+    }
+
+    private fun retryFallback(userId: UUID, pageable: Pageable, t: Throwable): ResponsePageDto<CourseDto>? {
+        LOGGER.error("Error in retry fallback to user: $userId and error: $t")
+        return ResponsePageDto<CourseDto>()
     }
 }

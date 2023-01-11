@@ -5,13 +5,21 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 
 @Configuration
 class RestTemplateConfig {
 
+    companion object {
+        val TIMEOUT = 5000L
+    }
+
     @Bean
     @LoadBalanced
     fun restTemplate(builder: RestTemplateBuilder): RestTemplate {
-        return builder.build()
+        return builder
+            .setConnectTimeout(Duration.ofMillis(TIMEOUT))
+            .setReadTimeout(Duration.ofMillis(TIMEOUT))
+            .build()
     }
 }
