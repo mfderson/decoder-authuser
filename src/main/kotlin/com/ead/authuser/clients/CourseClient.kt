@@ -3,6 +3,7 @@ package com.ead.authuser.clients
 import com.ead.authuser.dtos.CourseDto
 import com.ead.authuser.dtos.ResponsePageDto
 import com.ead.authuser.utils.ClientUtils
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.retry.annotation.Retry
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Value
@@ -27,7 +28,8 @@ class CourseClient(val restTemplate: RestTemplate) {
     @Value("\${ead.api.url.course}")
     lateinit var COURSE_REQUEST_URI: String
 
-    @Retry(name = "retryInstance", fallbackMethod = "retryFallback")
+//    @Retry(name = "retryInstance", fallbackMethod = "retryFallback")
+    @CircuitBreaker(name = "circuitbreakerInstance"/*, fallbackMethod = "circuitbreakerFallback"*/)
     fun getAllCoursesByUser(userId: UUID, pageable: Pageable): ResponsePageDto<CourseDto>? {
         var result: ResponseEntity<ResponsePageDto<CourseDto>>? = null
         val url = COURSE_REQUEST_URI + ClientUtils.createUrlGetAllCoursesByUser(userId, pageable)
@@ -55,6 +57,11 @@ class CourseClient(val restTemplate: RestTemplate) {
 
     private fun retryFallback(userId: UUID, pageable: Pageable, t: Throwable): ResponsePageDto<CourseDto>? {
         LOGGER.error("Error in retry fallback to user: $userId and error: $t")
+        return ResponsePageDto<CourseDto>()
+    }
+
+    private fun circuitbreakerFallback(userId: UUID, pageable: Pageable, t: Throwable): ResponsePageDto<CourseDto>? {
+        LOGGER.error("Error in circuit breaker fallback to user: $userId and error: $t")
         return ResponsePageDto<CourseDto>()
     }
 }

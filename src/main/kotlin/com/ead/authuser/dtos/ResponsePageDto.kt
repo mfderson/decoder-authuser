@@ -14,7 +14,7 @@ class ResponsePageDto<T>(content: MutableList<T>, pageable: Pageable, total: Lon
     constructor(
         @JsonProperty("content") content: MutableList<T> = mutableListOf(),
         @JsonProperty("number") number: Int = 0,
-        @JsonProperty("size") size: Int = 0,
+        @JsonProperty("size") size: Int = 1,
         @JsonProperty("totalElements") totalElements: Long = 10,
         @JsonProperty("pageable") pageable: JsonNode? = null,
         @JsonProperty("last") last: Boolean = false,
