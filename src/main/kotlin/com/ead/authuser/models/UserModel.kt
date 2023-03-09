@@ -57,12 +57,19 @@ data class UserModel(
 
     @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    var lastUpdateDate: LocalDateTime = LocalDateTime.now()
+    var lastUpdateDate: LocalDateTime = LocalDateTime.now(),
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "users_roles",
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "role_id")])
+    val roles: MutableSet<RoleModel> = mutableSetOf()
     ): RepresentationModel<UserModel>(), Serializable {
 
 }
 
-fun UserModel.convertToUsereventDto(): UserEventDto {
+fun UserModel.convertToUserEventDto(): UserEventDto {
     return UserEventDto(
         this.id,
         this.username,

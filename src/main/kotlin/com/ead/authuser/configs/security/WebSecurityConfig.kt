@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain
 class WebSecurityConfig {
 
     companion object {
-        private const val AUTH_WHITELIST = "/ead-authuser/auth/**"
+        private const val AUTH_WHITELIST = "/auth/**"
     }
 
     @Bean
