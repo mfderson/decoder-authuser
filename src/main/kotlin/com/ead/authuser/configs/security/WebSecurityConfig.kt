@@ -5,23 +5,20 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.core.userdetails.User
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.provisioning.InMemoryUserDetailsManager
-import org.springframework.security.provisioning.JdbcUserDetailsManager
-import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 class WebSecurityConfig(
     val userDetailsServiceImpl: UserDetailsServiceImpl,
-    val authenticationEntryPoint: AuthenticationEntryPointImpl
+    val authenticationEntryPoint: AuthenticationEntryPointImpl,
+    val jwtProvider: JwtProvider
 ) {
 
     companion object {
@@ -29,16 +26,21 @@ class WebSecurityConfig(
     }
 
     @Bean
+    fun authenticationJwtFilter() =
+        AuthenticationJwtFilter(jwtProvider, userDetailsServiceImpl)
+
+    @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .httpBasic()
-            .authenticationEntryPoint(authenticationEntryPoint)
+            .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint)
+            .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeHttpRequests()
             .antMatchers(AUTH_WHITELIST).permitAll()
-            .antMatchers(HttpMethod.GET, "/users/**").hasRole("STUDENT")
             .anyRequest().authenticated().and()
             .csrf().disable()
+            .addFilterBefore(authenticationJwtFilter(), UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }
 
