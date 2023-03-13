@@ -3,6 +3,7 @@ package com.ead.authuser.services.impl
 import com.ead.authuser.dtos.UserDTO
 import com.ead.authuser.dtos.UserEventDto
 import com.ead.authuser.enums.ActionType
+import com.ead.authuser.enums.RoleType
 import com.ead.authuser.enums.UserStatus
 import com.ead.authuser.enums.UserType
 import com.ead.authuser.exceptions.EmailAlreadyTakenException
@@ -10,9 +11,10 @@ import com.ead.authuser.exceptions.EntityNotFoundException
 import com.ead.authuser.exceptions.MismatchedOldPasswordException
 import com.ead.authuser.exceptions.UsernameAlreadyTakenException
 import com.ead.authuser.models.UserModel
-import com.ead.authuser.models.convertToUsereventDto
+import com.ead.authuser.models.convertToUserEventDto
 import com.ead.authuser.publishers.UserEventPublisher
 import com.ead.authuser.repositories.UserRepository
+import com.ead.authuser.services.RoleService
 import com.ead.authuser.services.UserService
 import com.ead.authuser.utils.DateTimeUtils
 import org.apache.logging.log4j.LogManager
@@ -21,14 +23,18 @@ import org.springframework.beans.BeanUtils
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 import java.util.*
 import javax.transaction.Transactional
 
 @Service
 class UserServiceImpl(
     val repository: UserRepository,
-    val userEventPublisher: UserEventPublisher
+    val userEventPublisher: UserEventPublisher,
+    val roleService: RoleService,
+    val passwordEncoder: PasswordEncoder
 ): UserService {
 
     companion object {
@@ -113,11 +119,18 @@ class UserServiceImpl(
         existsByEmail(userDTO.email)
         existsByUsername(userDTO.username)
 
+        val role = roleService.findByType(RoleType.ROLE_STUDENT)
+            ?: throw RuntimeException("Error: Role is not found")
+
+        userDTO.password = passwordEncoder.encode(userDTO.password)
+
         val user = UserModel(
             status = UserStatus.ACTIVE,
             type = UserType.STUDENT,
             creationDate = DateTimeUtils.utcLocalDateTime(),
-            lastUpdateDate = DateTimeUtils.utcLocalDateTime()
+            lastUpdateDate = DateTimeUtils.utcLocalDateTime(),
+            roles = mutableSetOf(role),
+            imageUrl = userDTO.imageUrl
         )
 
         BeanUtils.copyProperties(userDTO, user)
@@ -134,7 +147,7 @@ class UserServiceImpl(
     @Transactional
     override fun saveAndPublishUserEvent(userModel: UserModel): UserModel {
         val savedUserModel = repository.save(userModel)
-        userEventPublisher.publishUserEvent(savedUserModel.convertToUsereventDto(), ActionType.CREATE)
+        userEventPublisher.publishUserEvent(savedUserModel.convertToUserEventDto(), ActionType.CREATE)
         return savedUserModel
     }
 
@@ -146,7 +159,7 @@ class UserServiceImpl(
     @Transactional
     override fun updateAndPublishUserEvent(userModel: UserModel) : UserModel {
         val savedUserModel = repository.save(userModel)
-        userEventPublisher.publishUserEvent(savedUserModel.convertToUsereventDto(), ActionType.UPDATE)
+        userEventPublisher.publishUserEvent(savedUserModel.convertToUserEventDto(), ActionType.UPDATE)
         return savedUserModel
     }
 }
